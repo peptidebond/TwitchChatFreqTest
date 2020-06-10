@@ -1,5 +1,3 @@
-import tkinter.filedialog
-import tkinter as tk
 import pandas as pd
 from datetime import datetime
 import datetime as dt
@@ -9,10 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-root = tk.Tk()
-root.update()
-root.destroy()
-
+# These are all "Regular Expressions" designed to detect Mirth
 mirth = "|".join([r'(\bl+o+l+\b)', r'\bl+m+a+o+\b', r'(\bro+f+l+\b)', r'(\b(he)+\b)', r'(\bha\b)', r'(\ba*(h+a+)+\b)',
                   r'(\bfunny\b)', 'love', 'good', 'great', 'incredible', r'\bom+g+\b'])
 
