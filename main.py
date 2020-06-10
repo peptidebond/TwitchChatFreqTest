@@ -68,9 +68,10 @@ for i in range(len(df) - 1):
     sanitized_extremes += [extremes[0][len(extremes[0])-1]]
 
     rollingsum['maxes'] = rollingsum.iloc[sanitized_extremes][0]
-
+    rollingsum = rollingsum[rollingsum.maxes.notna()]
+    rollingsum.sort_values('maxes',ascending=False)
     # This part normalizes the maximums to a scale of 1-100; where 100 is the Funniest Moment in each vod
-    rollingsum['maxes'] = rollingsum['maxes'] * 100 // rollingsum['maxes'].max()
+    rollingsum['maxes'] = range(1,rollingsum.shape[0]+1)
     vodID = df[i].iloc[0]['Video']
     rollingsum['vidID'] = vodID
 
@@ -83,7 +84,7 @@ for i in range(len(df) - 1):
     rollingsum['m'] = t.strftime('%M')
     rollingsum['s'] = t.strftime('%S')
 
-    rollingsum = rollingsum[rollingsum.maxes.notna()]
+
     for index, row in rollingsum.iterrows():
         rollingsum.loc[index,'VidLink'] = r'https://www.twitch.tv/videos/' + vodID + r'?t=' + rollingsum['h'][index] + 'h' + rollingsum['m'][index] + 'm' + rollingsum['s'][index] + 's'
 
@@ -93,4 +94,4 @@ for i in range(len(df) - 1):
         first = False
     else:
         rollingsums = rollingsums.append(rollingsum)
-rollingsums = rollingsums.sort_values('maxes',ascending=False)
+rollingsums = rollingsums.sort_values('maxes')
