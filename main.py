@@ -8,8 +8,10 @@ import matplotlib.pyplot as plt
 import os
 
 # These are all "Regular Expressions" designed to detect Mirth
-mirth = "|".join([r'(\bl+o+l+\b)', r'\bl+m+a+o+\b', r'(\bro+f+l+\b)', r'(\b(he)+\b)', r'(\bha\b)', r'(\ba*(h+a+)+\b)',
-                  r'(\bfunny\b)', 'love', 'good', 'great', 'incredible', r'\bom+g+\b'])
+mirth = "|".join([r'(\bl+o+l+\b)', r'\bl+m+a+o+\b', r'(\bro+f+l+\b)', r'(\bha\b)', r'(\ba*(h+a+)+\b)',
+                  r'(\bfunny\b)', 'love', 'great', 'incredible', 'joke', r'\bom+g+\b'])
+
+questionable_mirth = ['good']
 
 count = 0
 df = []
@@ -52,18 +54,25 @@ for i in range(len(df) - 1):
     rollingsum = size.rolling('60s').sum()
 
     # This is how far apart each hilight has to be
-    # In this case n=15 means "150 seconds" apart (10s buckets * 15)
-    n = 15
+    # In this case n=50 means "500 seconds" apart (10s buckets * 50)
+    n = 50
 
     rollingsum = rollingsum.reset_index()
 
     # This part identifies high-points using the rolling sums
     extremes = argrelextrema(rollingsum[0].values, np.greater_equal, order=n)
-    rollingsum['maxes'] = rollingsum.iloc[extremes[0]][0]
+    sanitized_extremes = []  # Remove duplicate extremes
+    for j in range(1, len(extremes[0]) - 1):
+        if (extremes[0][j] - extremes[0][j - 1] > 3):
+            sanitized_extremes += [extremes[0][j - 1]]
+    sanitized_extremes += [extremes[0][len(extremes[0])-1]]
+
+    rollingsum['maxes'] = rollingsum.iloc[sanitized_extremes][0]
 
     # This part normalizes the maximums to a scale of 1-100; where 100 is the Funniest Moment in each vod
     rollingsum['maxes'] = rollingsum['maxes'] * 100 // rollingsum['maxes'].max()
-    rollingsum['vidID'] = df[i].iloc[0]['Video']
+    vodID = df[i].iloc[0]['Video']
+    rollingsum['vidID'] = vodID
 
     # I'm subtracting one minute here because the chat laughter detected usually comes *after* the joke
     # Also im subtracting a minute because of the width of the rolling sum but thats whatever
@@ -74,9 +83,14 @@ for i in range(len(df) - 1):
     rollingsum['m'] = t.strftime('%M')
     rollingsum['s'] = t.strftime('%S')
 
+    rollingsum = rollingsum[rollingsum.maxes.notna()]
+    for index, row in rollingsum.iterrows():
+        rollingsum.loc[index,'VidLink'] = r'https://www.twitch.tv/videos/' + vodID + r'?t=' + rollingsum['h'][index] + 'h' + rollingsum['m'][index] + 'm' + rollingsum['s'][index] + 's'
+
     # Roll it all up into one dataframe
     if first:
-        rollingsums = rollingsum[rollingsum.maxes.notna()]
+        rollingsums = rollingsum
         first = False
     else:
-        rollingsums = rollingsums.append(rollingsum[rollingsum.maxes.notna()])
+        rollingsums = rollingsums.append(rollingsum)
+rollingsums = rollingsums.sort_values('maxes',ascending=False)
