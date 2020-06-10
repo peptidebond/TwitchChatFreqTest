@@ -69,7 +69,7 @@ for i in range(len(df) - 1):
 
     rollingsum['maxes'] = rollingsum.iloc[sanitized_extremes][0]
     rollingsum = rollingsum[rollingsum.maxes.notna()]
-    rollingsum.sort_values('maxes',ascending=False)
+    rollingsum = rollingsum.sort_values('maxes',ascending=False)
     # This part normalizes the maximums to a scale of 1-100; where 100 is the Funniest Moment in each vod
     rollingsum['maxes'] = range(1,rollingsum.shape[0]+1)
     vodID = df[i].iloc[0]['Video']
